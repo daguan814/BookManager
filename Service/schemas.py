@@ -76,6 +76,7 @@ class BookListItem(BaseModel):
     publish_year: str | None
     cover_url: str | None = None
     quantity: int
+    created_at: datetime | None = None
     updated_at: datetime | None = None
 
 

@@ -1,0 +1,118 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BookManager 后台管理</title>
+  <link rel="stylesheet" href="./admin.css?v=20260302i" />
+  <script src="./auth-guard.js?v=20260302a"></script>
+</head>
+<body>
+  <main class="admin-shell">
+    <header class="admin-header">
+      <div>
+        <h1>BookManager 后台管理</h1>
+        <p>电脑端使用，管理图书与库存信息</p>
+      </div>
+      <div class="header-actions">
+        <a class="link-btn" href="./ops.html">打开出入库页</a>
+        <button class="link-btn" id="logoutBtn" type="button">退出登录</button>
+      </div>
+    </header>
+
+    <section id="errorBox" class="error-box hidden" aria-live="polite"></section>
+
+    <nav class="tab-nav" aria-label="后台功能导航">
+      <button class="tab-btn active" data-tab="books" type="button">图书管理</button>
+      <button class="tab-btn" data-tab="logs" type="button">库存流水</button>
+    </nav>
+
+    <section id="tab-books" class="tab-pane">
+      <div class="toolbar">
+        <input id="keyword" type="text" placeholder="书名 / ISBN / 作者" />
+        <button id="searchBooks" type="button">搜索</button>
+        <button id="reloadBooks" type="button">刷新</button>
+        <button id="exportBooksCsv" type="button">导出 CSV</button>
+      </div>
+      <div class="table-wrap">
+        <table class="grid">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>ISBN</th>
+              <th>书名</th>
+              <th>作者</th>
+              <th>出版社</th>
+              <th>出版时间</th>
+              <th>定价</th>
+              <th>页数</th>
+              <th>简介</th>
+              <th>库存</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="booksBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="tab-logs" class="tab-pane hidden">
+      <div class="toolbar">
+        <label for="logLimit">条数</label>
+        <input id="logLimit" type="number" value="100" min="10" max="500" step="10" />
+        <button id="reloadLogs" type="button">刷新流水</button>
+      </div>
+      <div class="table-wrap">
+        <table class="grid">
+          <thead>
+            <tr>
+              <th>时间</th>
+              <th>ISBN</th>
+              <th>书名</th>
+              <th>类型</th>
+              <th>数量</th>
+              <th>操作人</th>
+              <th>备注</th>
+            </tr>
+          </thead>
+          <tbody id="logsBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <div id="editModal" class="modal hidden" role="dialog" aria-modal="true" aria-label="编辑图书">
+    <div class="modal-card">
+      <h3>编辑图书</h3>
+      <div class="modal-form">
+        <label>ISBN</label>
+        <input id="editIsbn" type="text" disabled />
+        <label>书名</label>
+        <input id="editTitle" type="text" />
+        <label>作者</label>
+        <input id="editAuthor" type="text" />
+        <label>出版社</label>
+        <input id="editPublisher" type="text" />
+        <label>出版时间</label>
+        <input id="editPubdate" type="text" />
+        <label>定价</label>
+        <input id="editPrice" type="text" />
+        <label>页数</label>
+        <input id="editPage" type="text" />
+        <label>出版年</label>
+        <input id="editPublishYear" type="text" />
+        <label>封面链接</label>
+        <input id="editCoverUrl" type="text" />
+        <label>简介</label>
+        <textarea id="editGist" rows="4"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button id="saveEdit" type="button">保存修改</button>
+        <button id="cancelEdit" type="button">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="./admin.js?v=20260302i"></script>
+</body>
+</html>

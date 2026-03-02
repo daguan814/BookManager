@@ -1,10 +1,16 @@
-from fastapi import HTTPException
-from sqlalchemy import select
+﻿from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from Service.book_lookup import lookup_book_by_isbn
 from Service.models import Book, Inventory
 from Service.schemas import BookInfo
+
+
+class ServiceError(Exception):
+    def __init__(self, status_code: int, detail: str):
+        super().__init__(detail)
+        self.status_code = status_code
+        self.detail = detail
 
 
 def get_or_create_book_by_isbn(
@@ -75,11 +81,11 @@ def get_or_create_book_by_isbn(
 def get_book_and_inventory_by_isbn(db: Session, isbn: str) -> tuple[Book, Inventory]:
     book = db.scalar(select(Book).where(Book.isbn == isbn))
     if book is None:
-        raise HTTPException(status_code=404, detail="图书不存在，请先入库后再出库")
+        raise ServiceError(404, "图书不存在，请先入库后再出库")
 
     inventory = db.scalar(select(Inventory).where(Inventory.book_id == book.id))
     if inventory is None:
-        raise HTTPException(status_code=404, detail="图书库存记录不存在，请先入库")
+        raise ServiceError(404, "图书库存记录不存在，请先入库")
     return book, inventory
 
 
@@ -101,7 +107,7 @@ def to_book_info(book: Book, inventory: Inventory) -> BookInfo:
 
 def ensure_stock_for_outbound(current_quantity: int, outbound_quantity: int) -> None:
     if current_quantity < outbound_quantity:
-        raise HTTPException(
-            status_code=400,
-            detail=f"库存不足，当前库存 {current_quantity}，出库 {outbound_quantity}",
+        raise ServiceError(
+            400,
+            f"库存不足，当前库存 {current_quantity}，出库 {outbound_quantity}",
         )

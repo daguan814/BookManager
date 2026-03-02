@@ -1,0 +1,236 @@
+﻿* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: #dce8f8;
+  font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+  background:
+    radial-gradient(circle at 10% -10%, rgba(64, 144, 255, 0.24), transparent 32%),
+    radial-gradient(circle at 90% 0%, rgba(29, 189, 147, 0.20), transparent 30%),
+    linear-gradient(120deg, #0f1c2e, #102745 55%, #14395a);
+}
+
+.admin-shell {
+  width: min(1440px, 100%);
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-header h1 {
+  margin: 0;
+  font-size: 32px;
+}
+
+.admin-header p {
+  margin: 8px 0 0;
+  color: #b7c9e2;
+}
+
+.link-btn {
+  display: inline-block;
+  border: 1px solid #66a9ff;
+  color: #fff;
+  background: linear-gradient(135deg, #1a6fd6, #2487ff);
+  text-decoration: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+.error-box {
+  margin-top: 16px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: #ffd8d4;
+  background: rgba(170, 45, 36, 0.35);
+  border: 1px solid rgba(255, 170, 160, 0.45);
+}
+
+.tab-nav {
+  margin-top: 16px;
+  display: flex;
+  gap: 10px;
+}
+
+.tab-btn {
+  border: 1px solid rgba(143, 172, 206, 0.45);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #dce8f8;
+  padding: 9px 14px;
+  cursor: pointer;
+}
+
+.tab-btn.active {
+  border-color: #7bc1ff;
+  background: linear-gradient(135deg, #1b6fd8, #2f98ff);
+  color: #fff;
+}
+
+.tab-pane {
+  margin-top: 16px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.toolbar-title {
+  margin-right: auto;
+  font-weight: 700;
+}
+
+.toolbar input,
+.toolbar button {
+  height: 36px;
+}
+
+.toolbar input {
+  min-width: 240px;
+  padding: 0 10px;
+  border: 1px solid rgba(165, 188, 217, 0.4);
+  background: rgba(255, 255, 255, 0.12);
+  color: #e9f1fb;
+  border-radius: 8px;
+}
+
+.toolbar button {
+  border: 1px solid #5aa4ff;
+  background: rgba(46, 130, 230, 0.3);
+  color: #fff;
+  border-radius: 8px;
+  padding: 0 14px;
+  cursor: pointer;
+}
+
+.table-wrap {
+  overflow: auto;
+  border: 1px solid rgba(165, 188, 217, 0.35);
+  border-radius: 12px;
+  background: rgba(7, 20, 36, 0.48);
+  backdrop-filter: blur(8px);
+}
+
+.grid {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1360px;
+}
+
+.grid th,
+.grid td {
+  border-bottom: 1px solid rgba(155, 184, 219, 0.2);
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #dbe7f7;
+}
+
+.grid th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: rgba(17, 47, 80, 0.95);
+  color: #eaf4ff;
+  white-space: nowrap;
+}
+
+.grid tbody tr:hover {
+  background: rgba(120, 174, 236, 0.12);
+}
+
+.gist-cell {
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mini-btn {
+  border: 1px solid #6aa6ef;
+  border-radius: 8px;
+  background: rgba(42, 122, 214, 0.28);
+  color: #fff;
+  cursor: pointer;
+  padding: 4px 8px;
+  margin-right: 6px;
+}
+
+.mini-btn.danger {
+  border-color: #e47f7f;
+  background: rgba(181, 57, 57, 0.35);
+}
+
+.empty {
+  text-align: center;
+  color: #a9bfd9;
+  padding: 24px 0;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 14, 25, 0.62);
+  display: grid;
+  place-items: center;
+  z-index: 999;
+  padding: 14px;
+}
+
+.modal-card {
+  width: min(780px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  border: 1px solid rgba(130, 174, 224, 0.48);
+  border-radius: 12px;
+  background: #112743;
+  padding: 14px;
+}
+
+.modal-card h3 {
+  margin: 0 0 10px;
+}
+
+.modal-form {
+  display: grid;
+  gap: 8px;
+}
+
+.modal-form input,
+.modal-form textarea {
+  border: 1px solid rgba(155, 184, 219, 0.5);
+  border-radius: 8px;
+  background: rgba(7, 20, 36, 0.35);
+  color: #eef5ff;
+  padding: 8px 10px;
+}
+
+.modal-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+.modal-actions button {
+  border: 1px solid #6aa6ef;
+  border-radius: 8px;
+  background: rgba(42, 122, 214, 0.28);
+  color: #fff;
+  cursor: pointer;
+  padding: 8px 12px;
+}
+
+.hidden {
+  display: none;
+}

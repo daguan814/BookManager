@@ -1,0 +1,4 @@
+__pycache__/
+*.py[cod]
+*.sftp
+.DS_Store

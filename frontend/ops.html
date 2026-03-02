@@ -1,0 +1,117 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>BookManager 出入库</title>
+  <link rel="stylesheet" href="./styles.css?v=20260302g" />
+  <script src="./auth-guard.js?v=20260302a"></script>
+</head>
+<body>
+  <main class="page-shell">
+    <header class="hero">
+      <h1>图书出入库</h1>
+      <p>手机端作业页。后台管理请用电脑访问 <a href="./admin.html">admin.html</a> ｜ <a href="./login.html" id="logoutLink">退出登录</a></p>
+    </header>
+
+    <section class="main-card">
+      <form id="inventoryForm" class="form-grid" novalidate>
+        <div class="field">
+          <label>操作类型</label>
+          <div class="segmented" role="radiogroup" aria-label="操作类型">
+            <input id="actionIn" type="radio" name="action" value="in" checked />
+            <label for="actionIn">入库</label>
+            <input id="actionOut" type="radio" name="action" value="out" />
+            <label for="actionOut">出库</label>
+          </div>
+        </div>
+
+        <div class="field two-col">
+          <div>
+            <label for="isbnInput">ISBN</label>
+            <input id="isbnInput" type="text" placeholder="可手输或扫码" autocomplete="off" />
+          </div>
+          <button type="button" id="scanBtn" class="btn btn-primary">扫码填入 ISBN</button>
+        </div>
+
+        <div class="field two-col in-only" id="queryRow">
+          <div>
+            <label>&nbsp;</label>
+            <p class="hint">入库可查询外部 API 自动补全书名和作者，查不到可手填。</p>
+          </div>
+          <button type="button" id="queryBtn" class="btn">根据 ISBN 查询</button>
+        </div>
+
+        <div class="field in-only" id="titleRow">
+          <label for="titleInput">书名（入库必填）</label>
+          <input id="titleInput" type="text" placeholder="例如：Spring" autocomplete="off" />
+        </div>
+
+        <div class="field in-only" id="authorRow">
+          <label for="authorInput">作者</label>
+          <input id="authorInput" type="text" placeholder="可手填" autocomplete="off" />
+        </div>
+
+        <div class="field in-only" id="publisherRow">
+          <label for="publisherInput">出版社</label>
+          <input id="publisherInput" type="text" placeholder="可手填" autocomplete="off" />
+        </div>
+
+        <div class="field in-only" id="pubdateRow">
+          <label for="pubdateInput">出版时间</label>
+          <input id="pubdateInput" type="text" placeholder="例如：2019-07" autocomplete="off" />
+        </div>
+
+        <div class="field in-only" id="priceRow">
+          <label for="priceInput">定价</label>
+          <input id="priceInput" type="text" placeholder="例如：118.00" autocomplete="off" />
+        </div>
+
+        <div class="field in-only" id="pageRow">
+          <label for="pageInput">页数</label>
+          <input id="pageInput" type="text" placeholder="可手填" autocomplete="off" />
+        </div>
+
+        <div class="field in-only" id="gistRow">
+          <label for="gistInput">简介</label>
+          <textarea id="gistInput" rows="3" placeholder="可手填"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="qtyInput">数量（必填）</label>
+          <input id="qtyInput" type="number" min="1" step="1" placeholder="例如：1" inputmode="numeric" />
+        </div>
+
+        <div class="field">
+          <label for="operatorInput">操作人</label>
+          <input id="operatorInput" type="text" value="admin" autocomplete="off" />
+        </div>
+
+        <div class="actions">
+          <button id="submitBtn" type="submit" class="btn btn-success">确认入库</button>
+        </div>
+      </form>
+
+      <section id="queryCard" class="query-card hidden" aria-live="polite"></section>
+      <section id="statusBox" class="status hidden" aria-live="polite"></section>
+    </section>
+  </main>
+
+  <div id="scanModal" class="modal hidden" role="dialog" aria-modal="true" aria-label="扫码识别 ISBN">
+    <div class="modal-card">
+      <h3>扫码识别 ISBN</h3>
+      <p class="hint">识别成功后点击“确认填入”，不会自动提交。</p>
+      <div id="reader" class="reader-box"></div>
+      <p id="detectedIsbn" class="detected hidden"></p>
+      <div class="modal-actions">
+        <button id="rescanBtn" type="button" class="btn">重新扫码</button>
+        <button id="confirmScanBtn" type="button" class="btn btn-primary" disabled>确认填入</button>
+        <button id="closeScanBtn" type="button" class="btn">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="./vendor/html5-qrcode/html5-qrcode.min.js?v=20260302g"></script>
+  <script src="./app.js?v=20260302g"></script>
+</body>
+</html>

@@ -1,6 +1,5 @@
-from dataclasses import dataclass
+﻿from dataclasses import dataclass
 import os
-from pathlib import Path
 
 
 @dataclass(frozen=True)
@@ -11,7 +10,9 @@ class Settings:
     db_password: str = os.getenv("DB_PASSWORD", "Lhf134652")
     db_name: str = os.getenv("DB_NAME", "bookmanager")
     app_host: str = os.getenv("APP_HOST", "0.0.0.0")
-    app_port: int = int(os.getenv("APP_PORT", "18081"))
+    app_port: int = int(os.getenv("APP_PORT", "18080"))
+    ssl_cert_file: str | None = os.getenv("SSL_CERT_FILE", "/etc/nginx/ssl/shuijing.site.pem")
+    ssl_key_file: str | None = os.getenv("SSL_KEY_FILE", "/etc/nginx/ssl/shuijing.site.key")
     shumaidata_appid: str = "xZT0HZmiaFg2rWbEWS3ODE3u26sCmhmk"
     shumaidata_app_security: str = "FNlCyjyL2JndvhluQEk59gUcEI8GG3va"
 

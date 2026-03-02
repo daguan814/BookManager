@@ -1,67 +1,49 @@
 ﻿# BookManager
-图书管理系统（前后端分离，FastAPI + 静态前端）
+图书管理系统（Flask 单体应用，前后端不分离）
 
 ## 当前结构
 
-- `main.py`：FastAPI 入口（一键启动后端）
-- `Controller/`：路由蓝图（APIRouter）
+- `main.py`：Flask 入口（同时提供页面和 API）
+- `Controller/`：Flask 蓝图
 - `Service/`：模型、Schema、业务逻辑、外部书籍 API
-- `db/`：数据库连接
-- `config/`：配置读取
-- `frontend/`：前端页面
-- `init_db.sql`：MySQL 初始化脚本
+- `db/`：数据库连接与初始化脚本
+- `config.py`：配置读取
+- `frontend/`：由 Flask 直接托管的页面与静态资源
 
-## 功能（V1）
+## 功能（保持不变）
 
 - 扫码/输入 ISBN 查询书籍信息（外部 API）
 - 网页调用手机摄像头扫码 ISBN
-- 入库/出库确认弹窗，可修改数量
-- 管理界面：3 标签页（入库/出库、库存总览含流水、图书管理）
-- 前后端分离（前端静态服务 + 后端 API）
+- 入库/出库确认与库存更新
+- 后台管理：图书管理、库存流水、导出 CSV
 
 ## 1. 初始化数据库
 
 数据库名：`bookmanager`
 
 ```bash
-mysql -u root -p < init_db.sql
+mysql -u root -p < db/init_db.sql
 ```
 
-## 2. 使用 conda 启动后端（单命令）
+## 2. 本地启动
 
 ```bash
-conda create -n bookmanager python=3.11 -y
-conda activate bookmanager
+python -m venv .venv
+.venv\Scripts\activate
 pip install -r requirements.txt
-```
-
-数据库与端口配置统一在 `config/config.py` 里修改：
-
-- `db_host`
-- `db_port`（当前为 `13306`）
-- `db_user`
-- `db_password`
-- `db_name`
-
-一键启动后端：
-
-```bash
 python main.py
 ```
 
-接口文档：`http://127.0.0.1:8000/docs`
+默认地址：`https://127.0.0.1:18080`（若证书不存在会回退为 `http://127.0.0.1:18080`）
 
-## 3. 启动前端（独立）
+## 3. 环境变量
 
-```bash
-cd frontend
-python -m http.server 5173
-```
-
-浏览器打开：`http://127.0.0.1:5173`
-
-前端默认请求后端：`http://127.0.0.1:8000`（可在 `frontend/app.js` 修改 `API_BASE`）。
-
-说明：
-
-- 前端框架资源（Vue、Element Plus、html5-qrcode）已下载到 `frontend/vendor/`，默认本地加载，不依赖公网 CDN。
+- `APP_HOST` 默认 `0.0.0.0`
+- `APP_PORT` 默认 `18080`
+- `DB_HOST` 默认 `127.0.0.1`
+- `DB_PORT` 默认 `3306`
+- `DB_USER` 默认 `root`
+- `DB_PASSWORD` 默认 `Lhf134652`
+- `DB_NAME` 默认 `bookmanager`
+- `SSL_CERT_FILE` 默认 `/etc/nginx/ssl/shuijing.site.pem`
+- `SSL_KEY_FILE` 默认 `/etc/nginx/ssl/shuijing.site.key`
