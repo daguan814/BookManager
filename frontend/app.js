@@ -15,6 +15,8 @@
     page: document.getElementById('pageInput'),
     gist: document.getElementById('gistInput'),
     operator: document.getElementById('operatorInput'),
+    borrowerName: document.getElementById('borrowerNameInput'),
+    borrowerClass: document.getElementById('borrowerClassInput'),
     queryBtn: document.getElementById('queryBtn'),
     scanBtn: document.getElementById('scanBtn'),
     submitBtn: document.getElementById('submitBtn'),
@@ -26,6 +28,7 @@
     rescanBtn: document.getElementById('rescanBtn'),
     closeScanBtn: document.getElementById('closeScanBtn'),
     inOnlyFields: Array.from(document.querySelectorAll('.in-only')),
+    outOnlyFields: Array.from(document.querySelectorAll('.out-only')),
   };
 
   let scanner = null;
@@ -75,7 +78,8 @@
   function updateModeUI() {
     const inMode = getAction() === 'in';
     refs.inOnlyFields.forEach((el) => el.classList.toggle('hidden', !inMode));
-    refs.submitBtn.textContent = inMode ? '确认入库' : '确认出库';
+    refs.outOnlyFields.forEach((el) => el.classList.toggle('hidden', inMode));
+    refs.submitBtn.textContent = inMode ? '确认入库' : '确认借阅';
     refs.queryCard.classList.add('hidden');
   }
 
@@ -231,20 +235,34 @@
 
     clearStatus();
     refs.submitBtn.disabled = true;
-    refs.submitBtn.textContent = action === 'in' ? '入库提交中...' : '出库提交中...';
+    refs.submitBtn.textContent = action === 'in' ? '入库提交中...' : '借阅提交中...';
     try {
+      if (action === 'out') {
+        const borrower_name = (refs.borrowerName.value || '').trim();
+        const borrower_class = (refs.borrowerClass.value || '').trim();
+        if (!borrower_name) {
+          setStatus('借阅时借阅人必填。', 'warning');
+          return;
+        }
+        if (!borrower_class) {
+          setStatus('借阅时班级必填。', 'warning');
+          return;
+        }
+        payload.borrower_name = borrower_name;
+        payload.borrower_class = borrower_class;
+      }
       const resp = await fetchJson(`${API_BASE}/api/inventory/confirm`, {
         method: 'POST',
         body: JSON.stringify(payload),
       });
       renderQueryCard(resp.book || { isbn, title: payload.title });
       refs.qty.value = '';
-      setStatus(`${action === 'in' ? '入库' : '出库'}成功，当前库存：${resp.book.current_quantity}`, 'success');
+      setStatus(`${action === 'in' ? '入库' : '借阅'}成功，当前库存：${resp.book.current_quantity}`, 'success');
     } catch (error) {
       setStatus(`提交失败：${error.message}`, 'error');
     } finally {
       refs.submitBtn.disabled = false;
-      refs.submitBtn.textContent = action === 'in' ? '确认入库' : '确认出库';
+      refs.submitBtn.textContent = action === 'in' ? '确认入库' : '确认借阅';
     }
   }
 

@@ -39,11 +39,15 @@ CREATE TABLE IF NOT EXISTS `inventory_logs` (
   `book_id` INT NOT NULL,
   `action` VARCHAR(10) NOT NULL,
   `quantity` INT NOT NULL,
+  `related_log_id` INT NULL,
   `operator_name` VARCHAR(100) NULL,
+  `borrower_name` VARCHAR(100) NULL,
+  `borrower_class` VARCHAR(100) NULL,
   `remark` TEXT NULL,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_logs_book_id` (`book_id`),
+  KEY `idx_logs_related_log_id` (`related_log_id`),
   KEY `idx_logs_created_at` (`created_at`),
   CONSTRAINT `fk_logs_book_id` FOREIGN KEY (`book_id`) REFERENCES `books` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -45,5 +45,5 @@ python main.py
 - `DB_USER` 默认 `root`
 - `DB_PASSWORD` 默认 `Lhf134652`
 - `DB_NAME` 默认 `bookmanager`
-- `SSL_CERT_FILE` 默认 `/etc/nginx/ssl/shuijing.site.pem`
-- `SSL_KEY_FILE` 默认 `/etc/nginx/ssl/shuijing.site.key`
+- `APP_SSL_CERT_FILE` 默认 `/etc/nginx/ssl/shuijing.site.pem`
+- `APP_SSL_KEY_FILE` 默认 `/etc/nginx/ssl/shuijing.site.key`

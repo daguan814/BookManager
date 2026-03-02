@@ -2,6 +2,7 @@
 
 const state = {
   booksRows: [],
+  logsRows: [],
   editingBook: null,
 };
 
@@ -119,25 +120,76 @@ async function loadBooks() {
 
 async function loadLogs() {
   const limit = Number(document.getElementById('logLimit').value || 100);
-  const data = await fetchJson(`${API_BASE}/api/inventory/logs?limit=${limit}`);
+  const view = (document.getElementById('logView').value || 'all').trim();
+  const data = await fetchJson(`${API_BASE}/api/inventory/logs?limit=${limit}&view=${encodeURIComponent(view)}`);
+  state.logsRows = Array.isArray(data) ? data : [];
   const tbody = document.getElementById('logsBody');
-  if (!Array.isArray(data) || data.length === 0) {
-    tbody.innerHTML = emptyRow(7);
+  if (state.logsRows.length === 0) {
+    tbody.innerHTML = emptyRow(11);
     return;
   }
-  tbody.innerHTML = data
+  tbody.innerHTML = state.logsRows
     .map((item) => `
       <tr>
         <td>${escapeHtml(fmtTime(item.created_at))}</td>
         <td>${escapeHtml(item.isbn || '-')}</td>
         <td>${escapeHtml(item.title || '-')}</td>
-        <td>${item.action === 'in' ? '入库' : '出库'}</td>
+        <td>${item.action === 'in' ? '入库' : (item.action === 'return' ? '还书' : '借阅')}</td>
         <td>${escapeHtml(item.quantity ?? '-')}</td>
+        <td>${escapeHtml(item.borrower_name || '-')}</td>
+        <td>${escapeHtml(item.borrower_class || '-')}</td>
+        <td>${item.action === 'out' ? (item.is_returned ? '已还' : '借出未还') : (item.action === 'return' ? '已还书' : '-')}</td>
         <td>${escapeHtml(item.operator_name || '-')}</td>
         <td>${escapeHtml(item.remark || '-')}</td>
+        <td>${item.can_return ? `<button class="mini-btn" data-action="return" data-id="${item.id}">还书</button>` : '-'}</td>
       </tr>
     `)
     .join('');
+}
+
+async function returnBook(logId) {
+  const item = state.logsRows.find((x) => Number(x.id) === Number(logId));
+  if (!item) return;
+  const ok = window.confirm(`确认“${item.title || item.isbn}”执行还书吗？将按借阅数量 ${item.quantity} 还书并记录日志。`);
+  if (!ok) return;
+  await fetchJson(`${API_BASE}/api/inventory/return`, {
+    method: 'POST',
+    body: JSON.stringify({
+      log_id: Number(logId),
+      operator_name: 'admin',
+    }),
+  });
+  await Promise.all([loadLogs(), loadBooks()]);
+}
+
+function exportLogsCsv() {
+  if (state.logsRows.length === 0) {
+    showError('没有可导出的借阅日志');
+    return;
+  }
+  const headers = ['时间', 'ISBN', '书名', '类型', '数量', '借阅人', '班级', '状态', '操作人', '备注'];
+  const rows = state.logsRows.map((item) => [
+    fmtTime(item.created_at),
+    item.isbn,
+    item.title,
+    item.action === 'in' ? '入库' : (item.action === 'return' ? '还书' : '借阅'),
+    item.quantity,
+    item.borrower_name,
+    item.borrower_class,
+    item.action === 'out' ? (item.is_returned ? '已还' : '借出未还') : (item.action === 'return' ? '已还书' : '-'),
+    item.operator_name,
+    item.remark,
+  ]);
+  const csv = [headers, ...rows].map((line) => line.map(toCsvValue).join(',')).join('\n');
+  const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `借阅日志导出_${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 function switchTab(name) {
@@ -261,6 +313,8 @@ document.querySelectorAll('.tab-btn').forEach((button) => {
 document.getElementById('searchBooks').addEventListener('click', () => safeRun(loadBooks));
 document.getElementById('reloadBooks').addEventListener('click', () => safeRun(loadBooks));
 document.getElementById('reloadLogs').addEventListener('click', () => safeRun(loadLogs));
+document.getElementById('logView').addEventListener('change', () => safeRun(loadLogs));
+document.getElementById('exportLogsCsv').addEventListener('click', exportLogsCsv);
 document.getElementById('exportBooksCsv').addEventListener('click', exportBooksCsv);
 document.getElementById('keyword').addEventListener('keydown', (event) => {
   if (event.key === 'Enter') safeRun(loadBooks);
@@ -272,6 +326,13 @@ document.getElementById('booksBody').addEventListener('click', (event) => {
   const id = btn.dataset.id;
   if (btn.dataset.action === 'edit') safeRun(() => openEditModal(id));
   if (btn.dataset.action === 'delete') safeRun(() => deleteBook(id));
+});
+
+document.getElementById('logsBody').addEventListener('click', (event) => {
+  const btn = event.target.closest('button[data-action]');
+  if (!btn) return;
+  const id = btn.dataset.id;
+  if (btn.dataset.action === 'return') safeRun(() => returnBook(id));
 });
 
 document.getElementById('cancelEdit').addEventListener('click', closeEditModal);

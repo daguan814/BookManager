@@ -54,7 +54,10 @@ class InventoryLog(Base):
     book_id: Mapped[int] = mapped_column(ForeignKey("books.id", ondelete="CASCADE"), index=True)
     action: Mapped[str] = mapped_column(String(10))
     quantity: Mapped[int] = mapped_column(Integer)
+    related_log_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     operator_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    borrower_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    borrower_class: Mapped[str | None] = mapped_column(String(100), nullable=True)
     remark: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 

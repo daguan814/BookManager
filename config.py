@@ -1,5 +1,13 @@
-﻿from dataclasses import dataclass
+from dataclasses import dataclass
 import os
+
+
+def _optional_env(name: str) -> str | None:
+    value = os.getenv(name)
+    if value is None:
+        return None
+    value = value.strip()
+    return value or None
 
 
 @dataclass(frozen=True)
@@ -11,8 +19,9 @@ class Settings:
     db_name: str = os.getenv("DB_NAME", "bookmanager")
     app_host: str = os.getenv("APP_HOST", "0.0.0.0")
     app_port: int = int(os.getenv("APP_PORT", "18080"))
-    ssl_cert_file: str | None = os.getenv("SSL_CERT_FILE", "/etc/nginx/ssl/shuijing.site.pem")
-    ssl_key_file: str | None = os.getenv("SSL_KEY_FILE", "/etc/nginx/ssl/shuijing.site.key")
+    # Use app-specific SSL env names to avoid clashing with OpenSSL globals.
+    ssl_cert_file: str | None = _optional_env("APP_SSL_CERT_FILE")
+    ssl_key_file: str | None = _optional_env("APP_SSL_KEY_FILE")
     shumaidata_appid: str = "xZT0HZmiaFg2rWbEWS3ODE3u26sCmhmk"
     shumaidata_app_security: str = "FNlCyjyL2JndvhluQEk59gUcEI8GG3va"
 

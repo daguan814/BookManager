@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>BookManager 出入库</title>
+  <title>BookManager 图书借阅</title>
   <link rel="stylesheet" href="./styles.css?v=20260302g" />
   <script src="./auth-guard.js?v=20260302a"></script>
 </head>
 <body>
   <main class="page-shell">
     <header class="hero">
-      <h1>图书出入库</h1>
+      <h1>图书借阅</h1>
       <p>手机端作业页。后台管理请用电脑访问 <a href="./admin.html">admin.html</a> ｜ <a href="./login.html" id="logoutLink">退出登录</a></p>
     </header>
 
@@ -22,7 +22,7 @@
             <input id="actionIn" type="radio" name="action" value="in" checked />
             <label for="actionIn">入库</label>
             <input id="actionOut" type="radio" name="action" value="out" />
-            <label for="actionOut">出库</label>
+            <label for="actionOut">借阅</label>
           </div>
         </div>
 
@@ -85,6 +85,16 @@
         <div class="field">
           <label for="operatorInput">操作人</label>
           <input id="operatorInput" type="text" value="admin" autocomplete="off" />
+        </div>
+
+        <div class="field out-only hidden">
+          <label for="borrowerNameInput">借阅人</label>
+          <input id="borrowerNameInput" type="text" placeholder="借阅人姓名" autocomplete="off" />
+        </div>
+
+        <div class="field out-only hidden">
+          <label for="borrowerClassInput">班级</label>
+          <input id="borrowerClassInput" type="text" placeholder="例如：三年二班" autocomplete="off" />
         </div>
 
         <div class="actions">

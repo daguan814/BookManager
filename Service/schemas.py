@@ -55,12 +55,20 @@ class ConfirmRequest(BaseModel):
     price: str | None = Field(default=None, max_length=50)
     page: str | None = Field(default=None, max_length=50)
     operator_name: str | None = Field(default="admin", max_length=100)
+    borrower_name: str | None = Field(default=None, max_length=100)
+    borrower_class: str | None = Field(default=None, max_length=100)
     remark: str | None = Field(default=None, max_length=500)
 
 
 class ConfirmResponse(BaseModel):
     message: str
     book: BookInfo
+
+
+class ReturnRequest(BaseModel):
+    log_id: int = Field(ge=1)
+    operator_name: str | None = Field(default="admin", max_length=100)
+    remark: str | None = Field(default=None, max_length=500)
 
 
 class BookListItem(BaseModel):
@@ -112,6 +120,11 @@ class LogItem(BaseModel):
     title: str
     action: str
     quantity: int
+    related_log_id: int | None = None
+    is_returned: bool | None = None
+    can_return: bool = False
     operator_name: str | None = None
+    borrower_name: str | None = None
+    borrower_class: str | None = None
     remark: str | None = None
     created_at: datetime

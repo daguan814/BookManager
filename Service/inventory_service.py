@@ -81,7 +81,7 @@ def get_or_create_book_by_isbn(
 def get_book_and_inventory_by_isbn(db: Session, isbn: str) -> tuple[Book, Inventory]:
     book = db.scalar(select(Book).where(Book.isbn == isbn))
     if book is None:
-        raise ServiceError(404, "图书不存在，请先入库后再出库")
+        raise ServiceError(404, "图书不存在，请先入库后再借阅")
 
     inventory = db.scalar(select(Inventory).where(Inventory.book_id == book.id))
     if inventory is None:
@@ -109,5 +109,5 @@ def ensure_stock_for_outbound(current_quantity: int, outbound_quantity: int) -> 
     if current_quantity < outbound_quantity:
         raise ServiceError(
             400,
-            f"库存不足，当前库存 {current_quantity}，出库 {outbound_quantity}",
+            f"库存不足，当前库存 {current_quantity}，借阅 {outbound_quantity}",
         )

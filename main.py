@@ -1,10 +1,11 @@
 ﻿from pathlib import Path
 
-from flask import Flask, redirect, render_template
+from flask import Flask
 
 from Controller.book_controller import book_bp
 from Controller.health_controller import health_bp
 from Controller.inventory_controller import inventory_bp
+from Controller.page_controller import page_bp
 from config import settings
 from db.database import ensure_runtime_schema
 
@@ -20,26 +21,7 @@ def create_app() -> Flask:
     app.register_blueprint(health_bp)
     app.register_blueprint(inventory_bp)
     app.register_blueprint(book_bp)
-
-    @app.get("/")
-    def index():
-        return render_template("index.html")
-
-    @app.get("/login.html")
-    def login_page():
-        return render_template("login.html")
-
-    @app.get("/admin.html")
-    def admin_page():
-        return render_template("admin.html")
-
-    @app.get("/ops.html")
-    def ops_page():
-        return render_template("ops.html")
-
-    @app.get("/favicon.ico")
-    def favicon():
-        return redirect("/index.html")
+    app.register_blueprint(page_bp)
 
     with app.app_context():
         ensure_runtime_schema()

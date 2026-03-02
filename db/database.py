@@ -31,9 +31,19 @@ def ensure_runtime_schema() -> None:
         "price": "ALTER TABLE books ADD COLUMN price VARCHAR(50) NULL",
         "page": "ALTER TABLE books ADD COLUMN page VARCHAR(50) NULL",
     }
+    required_inventory_log_columns = {
+        "borrower_name": "ALTER TABLE inventory_logs ADD COLUMN borrower_name VARCHAR(100) NULL",
+        "borrower_class": "ALTER TABLE inventory_logs ADD COLUMN borrower_class VARCHAR(100) NULL",
+        "related_log_id": "ALTER TABLE inventory_logs ADD COLUMN related_log_id INT NULL",
+    }
 
     with engine.begin() as conn:
-        existing = {col["name"] for col in inspect(conn).get_columns("books")}
+        book_existing = {col["name"] for col in inspect(conn).get_columns("books")}
         for col_name, alter_sql in required_book_columns.items():
-            if col_name not in existing:
+            if col_name not in book_existing:
+                conn.execute(text(alter_sql))
+
+        logs_existing = {col["name"] for col in inspect(conn).get_columns("inventory_logs")}
+        for col_name, alter_sql in required_inventory_log_columns.items():
+            if col_name not in logs_existing:
                 conn.execute(text(alter_sql))
