@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BookManager 入出库</title>
+  <link rel="stylesheet" href="./vendor/element-plus/index.css" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div id="app" class="page-shell">
+    <header class="hero">
+      <h1>图书出入库</h1>
+      <p>手机端作业页（库存总览与图书管理后续放后台）</p>
+    </header>
+
+    <main class="main-card">
+      <section class="pane-box">
+        <el-form label-width="80px" class="book-form">
+          <el-form-item label="操作">
+            <el-radio-group v-model="form.action" size="large">
+              <el-radio-button label="in">入库</el-radio-button>
+              <el-radio-button label="out">出库</el-radio-button>
+            </el-radio-group>
+          </el-form-item>
+
+          <el-form-item label="扫码">
+            <el-button type="primary" @click="openCameraDialog">扫码填入 ISBN</el-button>
+          </el-form-item>
+
+          <el-form-item label="ISBN">
+            <el-input v-model="form.isbn" placeholder="ISBN（可手输）" />
+          </el-form-item>
+
+          <el-form-item label="数量">
+            <el-input v-model="form.quantity" placeholder="手动填写数量，如 1" />
+          </el-form-item>
+
+          <template v-if="form.action === 'in'">
+            <el-form-item label="查询">
+              <el-button type="primary" :loading="queryLoading" @click="queryByIsbn">
+                根据ISBN查询并自动填入
+              </el-button>
+            </el-form-item>
+            <el-form-item label="书名">
+              <el-input v-model="form.title" placeholder="可不填" />
+            </el-form-item>
+            <el-form-item label="作者">
+              <el-input v-model="form.author" placeholder="可不填" />
+            </el-form-item>
+            <el-form-item label="出版社">
+              <el-input v-model="form.publisher" placeholder="可不填" />
+            </el-form-item>
+            <el-form-item label="出版时间">
+              <el-input v-model="form.pubdate" placeholder="可不填，如 2019-07" />
+            </el-form-item>
+            <el-form-item label="定价">
+              <el-input v-model="form.price" placeholder="可不填，如 118.00" />
+            </el-form-item>
+            <el-form-item label="页数">
+              <el-input v-model="form.page" placeholder="可不填" />
+            </el-form-item>
+            <el-form-item label="简介">
+              <el-input v-model="form.gist" type="textarea" :rows="3" placeholder="可不填" />
+            </el-form-item>
+          </template>
+
+          <el-form-item label="操作人">
+            <el-input v-model="form.operator_name" placeholder="可不填，默认 admin" />
+          </el-form-item>
+
+          <el-form-item>
+            <el-button type="success" :loading="submitLoading" @click="submitInventory">
+              确认{{ form.action === 'in' ? '入库' : '出库' }}
+            </el-button>
+          </el-form-item>
+        </el-form>
+
+        <div class="query-result-card" v-if="queriedBook">
+          <h4>查询结果</h4>
+          <p><strong>ISBN：</strong>{{ queriedBook.isbn || '-' }}</p>
+          <p><strong>书名：</strong>{{ queriedBook.title || '-' }}</p>
+          <p><strong>作者：</strong>{{ queriedBook.author || '-' }}</p>
+          <p><strong>出版社：</strong>{{ queriedBook.publisher || '-' }}</p>
+          <p><strong>出版时间：</strong>{{ queriedBook.pubdate || queriedBook.publish_year || '-' }}</p>
+          <p><strong>定价：</strong>{{ queriedBook.price || '-' }}</p>
+          <p><strong>页数：</strong>{{ queriedBook.page || '-' }}</p>
+          <p><strong>当前库存：</strong>{{ queriedBook.current_quantity ?? '-' }}</p>
+        </div>
+
+        <el-alert
+          v-if="scanStatus"
+          :title="scanStatus"
+          :type="scanStatusType"
+          :closable="false"
+          show-icon
+          class="status-alert"
+        />
+      </section>
+    </main>
+
+    <el-dialog
+      v-model="cameraDialogVisible"
+      title="扫码识别 ISBN"
+      :width="cameraDialogWidth"
+      :fullscreen="isMobileScreen"
+      @opened="startCameraScan"
+      @close="stopCameraScan"
+    >
+      <p class="scan-tip">识别成功后点击“确认填入”，仅填入 ISBN 不自动查询。</p>
+      <div id="reader" class="reader-box"></div>
+      <div class="scan-detected" v-if="cameraDetectedIsbn">
+        已识别 ISBN：<strong>{{ cameraDetectedIsbn }}</strong>
+      </div>
+      <template #footer>
+        <el-button @click="rescanCamera">重新扫码</el-button>
+        <el-button type="primary" :disabled="!cameraDetectedIsbn" @click="confirmCameraIsbn">确认填入</el-button>
+        <el-button @click="cameraDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
+  </div>
+
+  <script src="./vendor/vue/vue.global.prod.js"></script>
+  <script src="./vendor/element-plus/index.full.min.js"></script>
+  <script src="./vendor/html5-qrcode/html5-qrcode.min.js" type="text/javascript"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
