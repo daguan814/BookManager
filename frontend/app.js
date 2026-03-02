@@ -1,5 +1,6 @@
 ﻿(() => {
   const API_BASE = window.BOOKMANAGER_API_BASE || window.location.origin;
+  const SCAN_CAMERA_KEY = 'bm_scan_camera_id';
 
   const refs = {
     form: document.getElementById('inventoryForm'),
@@ -24,6 +25,7 @@
     queryCard: document.getElementById('queryCard'),
     scanModal: document.getElementById('scanModal'),
     detectedIsbn: document.getElementById('detectedIsbn'),
+    torchBtn: document.getElementById('torchBtn'),
     confirmScanBtn: document.getElementById('confirmScanBtn'),
     rescanBtn: document.getElementById('rescanBtn'),
     closeScanBtn: document.getElementById('closeScanBtn'),
@@ -34,6 +36,44 @@
   let scanner = null;
   let scannerRunning = false;
   let detected = '';
+  let torchSupported = false;
+  let torchOn = false;
+
+  function getRememberedCameraId() {
+    try {
+      return localStorage.getItem(SCAN_CAMERA_KEY) || '';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  function rememberCameraId(cameraId) {
+    if (!cameraId) return;
+    try {
+      localStorage.setItem(SCAN_CAMERA_KEY, cameraId);
+    } catch (_) {
+      // no-op
+    }
+  }
+
+  async function getPreferredCameraConfig() {
+    try {
+      const cameras = await Html5Qrcode.getCameras();
+      if (!Array.isArray(cameras) || cameras.length === 0) return { facingMode: { ideal: 'environment' } };
+
+      const remembered = getRememberedCameraId();
+      if (remembered) {
+        const hit = cameras.find((x) => x.id === remembered);
+        if (hit) return hit.id;
+      }
+
+      const byLabel = cameras.find((x) => /back|rear|environment|后置|广角/i.test(x.label || ''));
+      if (byLabel) return byLabel.id;
+      return cameras[0].id;
+    } catch (_) {
+      return { facingMode: { ideal: 'environment' } };
+    }
+  }
 
   function getAction() {
     return refs.actionIn.checked ? 'in' : 'out';
@@ -138,21 +178,26 @@
     refs.detectedIsbn.textContent = '';
     refs.detectedIsbn.classList.add('hidden');
     refs.confirmScanBtn.disabled = true;
+    refs.torchBtn.classList.add('hidden');
+    refs.torchBtn.textContent = '开灯';
+    torchSupported = false;
+    torchOn = false;
 
     scanner = new Html5Qrcode('reader');
     const screen = window.innerWidth || 390;
     const formats = window.Html5QrcodeSupportedFormats;
     const config = {
-      fps: screen <= 768 ? 24 : 16,
+      fps: screen <= 768 ? 28 : 20,
       qrbox: {
-        width: Math.max(220, Math.min(360, Math.floor(screen * 0.9))),
-        height: Math.max(70, Math.min(120, Math.floor(screen * 0.28))),
+        width: Math.max(240, Math.min(340, Math.floor(screen * 0.85))),
+        height: Math.max(80, Math.min(110, Math.floor(screen * 0.22))),
       },
       aspectRatio: 1.777,
       experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+      disableFlip: true,
     };
     if (formats) {
-      config.formatsToSupport = [formats.EAN_13, formats.EAN_8, formats.UPC_A];
+      config.formatsToSupport = [formats.EAN_13, formats.EAN_8];
     }
 
     const onSuccess = async (decodedText) => {
@@ -166,16 +211,56 @@
     };
 
     try {
-      await scanner.start({ facingMode: 'environment' }, config, onSuccess, () => {});
+      const cameraConfig = await getPreferredCameraConfig();
+      await scanner.start(cameraConfig, config, onSuccess, () => {});
       scannerRunning = true;
+
+      const settings = scanner.getRunningTrackSettings?.();
+      if (settings && settings.deviceId) rememberCameraId(settings.deviceId);
+
+      try {
+        await scanner.applyVideoConstraints({ advanced: [{ focusMode: 'continuous' }] });
+      } catch (_) {
+        // no-op
+      }
+
+      try {
+        const caps = scanner.getRunningTrackCapabilities?.();
+        if (caps && caps.torch) {
+          torchSupported = true;
+          refs.torchBtn.classList.remove('hidden');
+        }
+      } catch (_) {
+        // no-op
+      }
     } catch (error) {
       setStatus(`摄像头启动失败：${error}`, 'error');
+    }
+  }
+
+  async function toggleTorch() {
+    if (!scannerRunning || !scanner || !torchSupported) return;
+    try {
+      torchOn = !torchOn;
+      await scanner.applyVideoConstraints({ advanced: [{ torch: torchOn }] });
+      refs.torchBtn.textContent = torchOn ? '关灯' : '开灯';
+    } catch (error) {
+      torchOn = false;
+      refs.torchBtn.textContent = '开灯';
+      setStatus(`手电筒切换失败：${error}`, 'warning');
     }
   }
 
   async function stopScan() {
     if (!scanner) return;
     try {
+      if (scannerRunning && torchOn) {
+        try {
+          await scanner.applyVideoConstraints({ advanced: [{ torch: false }] });
+        } catch (_) {
+          // no-op
+        }
+      }
       if (scannerRunning) await scanner.stop();
       await scanner.clear();
     } catch (_) {
@@ -183,6 +268,10 @@
     } finally {
       scannerRunning = false;
       scanner = null;
+      torchSupported = false;
+      torchOn = false;
+      refs.torchBtn.classList.add('hidden');
+      refs.torchBtn.textContent = '开灯';
     }
   }
 
@@ -271,6 +360,9 @@
   refs.scanBtn.addEventListener('click', openScanModal);
   refs.closeScanBtn.addEventListener('click', closeScanModal);
   refs.rescanBtn.addEventListener('click', rescan);
+  refs.torchBtn.addEventListener('click', () => {
+    toggleTorch();
+  });
   refs.confirmScanBtn.addEventListener('click', () => {
     if (!detected) return;
     refs.isbn.value = detected;
@@ -284,4 +376,3 @@
 
   updateModeUI();
 })();
-

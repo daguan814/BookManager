@@ -110,10 +110,11 @@
   <div id="scanModal" class="modal hidden" role="dialog" aria-modal="true" aria-label="扫码识别 ISBN">
     <div class="modal-card">
       <h3>扫码识别 ISBN</h3>
-      <p class="hint">识别成功后点击“确认填入”，不会自动提交。</p>
+      <p class="hint">识别成功后点击“确认填入”，不会自动提交。光线不足可开手电筒。</p>
       <div id="reader" class="reader-box"></div>
       <p id="detectedIsbn" class="detected hidden"></p>
       <div class="modal-actions">
+        <button id="torchBtn" type="button" class="btn hidden">开灯</button>
         <button id="rescanBtn" type="button" class="btn">重新扫码</button>
         <button id="confirmScanBtn" type="button" class="btn btn-primary" disabled>确认填入</button>
         <button id="closeScanBtn" type="button" class="btn">关闭</button>
