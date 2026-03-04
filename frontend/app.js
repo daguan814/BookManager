@@ -103,6 +103,23 @@
     refs.statusBox.textContent = '';
   }
 
+  function clearBookFields() {
+    refs.title.value = '';
+    refs.author.value = '';
+    refs.publisher.value = '';
+    refs.pubdate.value = '';
+    refs.price.value = '';
+    refs.page.value = '';
+    refs.gist.value = '';
+  }
+
+  function clearFormExceptIsbnAndQty() {
+    clearBookFields();
+    refs.borrowerName.value = '';
+    refs.borrowerClass.value = '';
+    refs.queryCard.classList.add('hidden');
+  }
+
   async function fetchJson(url, options = {}) {
     const response = await fetch(url, {
       headers: { 'Content-Type': 'application/json' },
@@ -153,18 +170,19 @@
         method: 'POST',
         body: JSON.stringify({ isbn }),
       });
+      clearBookFields();
       refs.isbn.value = book.isbn || isbn;
-      refs.title.value = book.title || refs.title.value;
-      refs.author.value = book.author || refs.author.value;
-      refs.publisher.value = book.publisher || refs.publisher.value;
-      refs.pubdate.value = book.pubdate || book.publish_year || refs.pubdate.value;
-      refs.price.value = book.price || refs.price.value;
-      refs.page.value = book.page || refs.page.value;
-      refs.gist.value = book.gist || refs.gist.value;
+      refs.title.value = book.title || '';
+      refs.author.value = book.author || '';
+      refs.publisher.value = book.publisher || '';
+      refs.pubdate.value = book.pubdate || book.publish_year || '';
+      refs.price.value = book.price || '';
+      refs.page.value = book.page || '';
+      refs.gist.value = book.gist || '';
       renderQueryCard(book);
       setStatus('查询成功，已自动填入可用字段。', 'success');
     } catch (error) {
-      refs.queryCard.classList.add('hidden');
+      clearFormExceptIsbnAndQty();
       setStatus(`查询失败：${error.message}`, 'error');
     } finally {
       refs.queryBtn.disabled = false;
@@ -345,7 +363,7 @@
         body: JSON.stringify(payload),
       });
       renderQueryCard(resp.book || { isbn, title: payload.title });
-      refs.qty.value = '';
+      refs.qty.value = '1';
       setStatus(`${action === 'in' ? '入库' : '借阅'}成功，当前库存：${resp.book.current_quantity}`, 'success');
     } catch (error) {
       setStatus(`提交失败：${error.message}`, 'error');
@@ -372,7 +390,14 @@
 
   refs.actionIn.addEventListener('change', updateModeUI);
   refs.actionOut.addEventListener('change', updateModeUI);
+  refs.qty.addEventListener('focus', () => {
+    refs.qty.select();
+  });
   window.addEventListener('beforeunload', stopScan);
+
+  if (!refs.qty.value) {
+    refs.qty.value = '1';
+  }
 
   updateModeUI();
 })();
