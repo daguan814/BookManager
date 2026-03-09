@@ -1,7 +1,7 @@
 ﻿(() => {
   const PASS = 'sgxx';
   const KEY = 'bm_access_ok';
-  const next = new URLSearchParams(window.location.search).get('next') || './admin.html';
+  const next = new URLSearchParams(window.location.search).get('next') || './index.html';
   const err = document.getElementById('err');
   const pwd = document.getElementById('pwd');
 

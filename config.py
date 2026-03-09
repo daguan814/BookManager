@@ -18,7 +18,7 @@ class Settings:
     db_password: str = os.getenv("DB_PASSWORD", "Lhf134652")
     db_name: str = os.getenv("DB_NAME", "bookmanager")
     app_host: str = os.getenv("APP_HOST", "0.0.0.0")
-    app_port: int = int(os.getenv("APP_PORT", "18080"))
+    app_port: int = int(os.getenv("APP_PORT", "8081"))
     # Use app-specific SSL env names to avoid clashing with OpenSSL globals.
     ssl_cert_file: str | None = _optional_env("APP_SSL_CERT_FILE")
     ssl_key_file: str | None = _optional_env("APP_SSL_KEY_FILE")

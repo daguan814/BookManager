@@ -10,6 +10,6 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 
 COPY . /app
 
-EXPOSE 18080
+EXPOSE 8081
 
-CMD ["sh", "-c", "if [ -n \"$APP_SSL_CERT_FILE\" ] && [ -n \"$APP_SSL_KEY_FILE\" ] && [ -f \"$APP_SSL_CERT_FILE\" ] && [ -f \"$APP_SSL_KEY_FILE\" ]; then exec gunicorn -w ${GUNICORN_WORKERS:-2} -k gthread --threads ${GUNICORN_THREADS:-4} -b ${APP_HOST:-0.0.0.0}:${APP_PORT:-18080} --certfile \"$APP_SSL_CERT_FILE\" --keyfile \"$APP_SSL_KEY_FILE\" main:app; else exec gunicorn -w ${GUNICORN_WORKERS:-2} -k gthread --threads ${GUNICORN_THREADS:-4} -b ${APP_HOST:-0.0.0.0}:${APP_PORT:-18080} main:app; fi"]
+CMD ["sh", "-c", "if [ -n \"$APP_SSL_CERT_FILE\" ] && [ -n \"$APP_SSL_KEY_FILE\" ] && [ -f \"$APP_SSL_CERT_FILE\" ] && [ -f \"$APP_SSL_KEY_FILE\" ]; then exec gunicorn -w ${GUNICORN_WORKERS:-2} -k gthread --threads ${GUNICORN_THREADS:-4} -b ${APP_HOST:-0.0.0.0}:${APP_PORT:-8081} --certfile \"$APP_SSL_CERT_FILE\" --keyfile \"$APP_SSL_KEY_FILE\" main:app; else exec gunicorn -w ${GUNICORN_WORKERS:-2} -k gthread --threads ${GUNICORN_THREADS:-4} -b ${APP_HOST:-0.0.0.0}:${APP_PORT:-8081} main:app; fi"]

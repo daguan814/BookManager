@@ -8,6 +8,11 @@ def index():
     return render_template("index.html")
 
 
+@page_bp.get("/index.html")
+def index_page():
+    return render_template("index.html")
+
+
 @page_bp.get("/login.html")
 def login_page():
     return render_template("login.html")

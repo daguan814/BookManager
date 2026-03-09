@@ -34,12 +34,12 @@ pip install -r requirements.txt
 python main.py
 ```
 
-默认地址：`https://127.0.0.1:18080`（若证书不存在会回退为 `http://127.0.0.1:18080`）
+默认地址：`https://127.0.0.1:8081`（若证书不存在会回退为 `http://127.0.0.1:8081`）
 
 ## 3. 环境变量
 
 - `APP_HOST` 默认 `0.0.0.0`
-- `APP_PORT` 默认 `18080`
+- `APP_PORT` 默认 `8081`
 - `DB_HOST` 默认 `127.0.0.1`
 - `DB_PORT` 默认 `3306`
 - `DB_USER` 默认 `root`
