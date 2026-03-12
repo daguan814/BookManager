@@ -337,11 +337,6 @@ document.getElementById('logsBody').addEventListener('click', (event) => {
 
 document.getElementById('cancelEdit').addEventListener('click', closeEditModal);
 document.getElementById('saveEdit').addEventListener('click', () => safeRun(saveEdit));
-document.getElementById('logoutBtn').addEventListener('click', () => {
-  sessionStorage.removeItem('bm_access_ok');
-  window.location.href = './login.html';
-});
-
 safeRun(async () => {
   await Promise.all([loadBooks(), loadLogs()]);
 });

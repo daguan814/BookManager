@@ -22,6 +22,10 @@ class Settings:
     # Use app-specific SSL env names to avoid clashing with OpenSSL globals.
     ssl_cert_file: str | None = _optional_env("APP_SSL_CERT_FILE")
     ssl_key_file: str | None = _optional_env("APP_SSL_KEY_FILE")
+    app_secret_key: str = os.getenv("APP_SECRET_KEY", "bookmanager-change-this-secret")
+    web_login_password: str = os.getenv("WEB_LOGIN_PASSWORD", "sgxx")
+    script_api_token: str = os.getenv("SCRIPT_API_TOKEN", "bookmanager-script-token")
+    session_days: int = int(os.getenv("SESSION_DAYS", "7"))
     shumaidata_appid: str = "xZT0HZmiaFg2rWbEWS3ODE3u26sCmhmk"
     shumaidata_app_security: str = "FNlCyjyL2JndvhluQEk59gUcEI8GG3va"
 

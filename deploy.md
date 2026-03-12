@@ -10,11 +10,14 @@
 - 对外端口：`8081`（HTTPS）
 - 数据库：`127.0.0.1:3306`
 - 容器名：`BookManager`
+- Web 登录密码环境变量：`WEB_LOGIN_PASSWORD`
+- 脚本专用 Token 环境变量：`SCRIPT_API_TOKEN`
 
 ## 2. 运行方式说明
 - 容器内使用 `gunicorn` 作为生产 WSGI 服务器。
 - 若容器内存在证书文件（`APP_SSL_CERT_FILE`/`APP_SSL_KEY_FILE`）则启用 HTTPS，否则回退 HTTP。
 - 可选调优环境变量：`GUNICORN_WORKERS`（默认 2）、`GUNICORN_THREADS`（默认 4）。
+- Flask 负责页面/API 鉴权：浏览器走 session 登录，图片脚本走 `X-Bookmanager-Token`。
 
 ## 3. 首次部署 / 全量更新
 在本机项目目录执行：
@@ -47,6 +50,9 @@ ssh -i $key -p $port $server "cd $remote && \
   sudo docker run -d --name BookManager --restart unless-stopped --network host \
     -e APP_HOST=0.0.0.0 -e APP_PORT=8081 \
     -e DB_HOST=127.0.0.1 -e DB_PORT=3306 -e DB_USER=root -e DB_PASSWORD=Lhf134652 -e DB_NAME=bookmanager \
+    -e APP_SECRET_KEY=bookmanager-change-this-secret \
+    -e WEB_LOGIN_PASSWORD=sgxx \
+    -e SCRIPT_API_TOKEN=bookmanager-script-token \
     -e APP_SSL_CERT_FILE=/etc/nginx/ssl/shuijing.site.pem \
     -e APP_SSL_KEY_FILE=/etc/nginx/ssl/shuijing.site.key \
     -v /vol2/1000/backup/证书文档/Nginx:/etc/nginx/ssl:ro \
@@ -64,6 +70,9 @@ ssh -i C:/Users/Administrator/Documents/id_rsa_macos -p 12222 shuijing@shuijing.
    sudo docker run -d --name BookManager --restart unless-stopped --network host \
      -e APP_HOST=0.0.0.0 -e APP_PORT=8081 \
      -e DB_HOST=127.0.0.1 -e DB_PORT=3306 -e DB_USER=root -e DB_PASSWORD=Lhf134652 -e DB_NAME=bookmanager \
+     -e APP_SECRET_KEY=bookmanager-change-this-secret \
+     -e WEB_LOGIN_PASSWORD=sgxx \
+     -e SCRIPT_API_TOKEN=bookmanager-script-token \
      -e APP_SSL_CERT_FILE=/etc/nginx/ssl/shuijing.site.pem \
      -e APP_SSL_KEY_FILE=/etc/nginx/ssl/shuijing.site.key \
      -v /vol2/1000/backup/证书文档/Nginx:/etc/nginx/ssl:ro \
@@ -88,4 +97,5 @@ ssh -i C:/Users/Administrator/Documents/id_rsa_macos -p 12222 shuijing@ssh.shuij
 - `8081 打不开`：确认容器日志里没有证书读取错误，且证书文件名为 `shuijing.site.pem` / `shuijing.site.key`。
 - `frpc 访问不到`：把 `frpc.toml`（或对应 ini 配置）里指向 BookManager 的本地端口同步改成 `8081`，重启 `frpc` 后再检查连通性。
 - `API 报错`：先看 `BookManager` 日志，再检查数据库连通性。
+- `图片脚本 401`：检查容器里的 `SCRIPT_API_TOKEN` 是否和脚本端一致。
 - 浏览器仍旧旧页面：强刷 `Ctrl+F5`。
