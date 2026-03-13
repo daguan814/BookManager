@@ -23,6 +23,9 @@ DEFAULT_BASE_URL = os.getenv("BOOKMANAGER_API_BASE", "https://shuijing.site:8081
 DEFAULT_OPERATOR = os.getenv("BOOKMANAGER_OPERATOR", "image-importer")
 DEFAULT_QUANTITY = int(os.getenv("BOOKMANAGER_IMPORT_QUANTITY", "1"))
 DEFAULT_TIMEOUT = float(os.getenv("BOOKMANAGER_API_TIMEOUT", "15"))
+DEFAULT_REQUEST_INTERVAL = float(os.getenv("BOOKMANAGER_REQUEST_INTERVAL", "0.5"))
+DEFAULT_RETRY_COUNT = int(os.getenv("BOOKMANAGER_REQUEST_RETRY_COUNT", "2"))
+DEFAULT_RETRY_DELAY = float(os.getenv("BOOKMANAGER_REQUEST_RETRY_DELAY", "1.0"))
 DEFAULT_VERIFY_SSL = os.getenv("BOOKMANAGER_VERIFY_SSL", "true").strip().lower() not in {"0", "false", "no"}
 DEFAULT_SCRIPT_TOKEN = os.getenv("SCRIPT_API_TOKEN", "bookmanager-script-token").strip()
 DEFAULT_SSH_HOST = os.getenv("BOOKMANAGER_SSH_HOST", "shuijing.site").strip()
@@ -54,12 +57,32 @@ class RuntimeOptions:
     tunnel_process: subprocess.Popen[str] | None = None
 
 
+@dataclass
+class RequestThrottle:
+    # 控制两次请求之间的最小间隔，避免短时间内把接口打得太快。
+    min_interval: float
+    last_request_at: float = 0.0
+
+    def wait(self) -> None:
+        if self.min_interval <= 0:
+            return
+        now = time.monotonic()
+        elapsed = now - self.last_request_at
+        remaining = self.min_interval - elapsed
+        if remaining > 0:
+            time.sleep(remaining)
+        self.last_request_at = time.monotonic()
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="从未入库图片中识别 ISBN 并调用 BookManager 入库。")
     parser.add_argument("--base-url", default=DEFAULT_BASE_URL, help="BookManager 服务地址。")
     parser.add_argument("--operator", default=DEFAULT_OPERATOR, help="入库操作人。")
     parser.add_argument("--quantity", type=int, default=DEFAULT_QUANTITY, help="每张图片默认入库数量。")
     parser.add_argument("--timeout", type=float, default=DEFAULT_TIMEOUT, help="API 请求超时时间（秒）。")
+    parser.add_argument("--request-interval", type=float, default=DEFAULT_REQUEST_INTERVAL, help="两次 API 请求之间的最小间隔（秒）。")
+    parser.add_argument("--retry-count", type=int, default=DEFAULT_RETRY_COUNT, help="接口异常时的自动重试次数。")
+    parser.add_argument("--retry-delay", type=float, default=DEFAULT_RETRY_DELAY, help="每次重试前的基础等待时间（秒）。")
     parser.add_argument("--pending-dir", type=Path, default=DEFAULT_PENDING_DIR, help="待处理图片目录。")
     parser.add_argument("--failure-dir", type=Path, default=DEFAULT_FAILURE_DIR, help="失败报告输出目录。")
     parser.add_argument("--script-token", default=DEFAULT_SCRIPT_TOKEN, help="后端脚本专用 token。")
@@ -288,21 +311,41 @@ def request_json(
     verify_ssl: bool,
     payload: dict | None,
     script_token: str,
+    throttle: RequestThrottle | None = None,
+    retry_count: int = DEFAULT_RETRY_COUNT,
+    retry_delay: float = DEFAULT_RETRY_DELAY,
 ) -> dict:
-    try:
-        response = session.request(method, url, json=payload, timeout=timeout, verify=verify_ssl)
-    except requests.exceptions.SSLError as exc:
-        if os.name == "nt":
-            return powershell_request_json(method, url, payload, timeout, verify_ssl, script_token)
-        raise ImportErrorDetail(f"请求失败: {exc}") from exc
-    except requests.RequestException as exc:
-        raise ImportErrorDetail(f"请求失败: {exc}") from exc
+    # 所有接口请求都经过这里，统一做限速和临时性错误重试。
+    last_error: Exception | None = None
+    for attempt in range(retry_count + 1):
+        if throttle is not None:
+            throttle.wait()
+        try:
+            response = session.request(method, url, json=payload, timeout=timeout, verify=verify_ssl)
+        except requests.exceptions.SSLError as exc:
+            if os.name == "nt":
+                return powershell_request_json(method, url, payload, timeout, verify_ssl, script_token)
+            raise ImportErrorDetail(f"\u8bf7\u6c42\u5931\u8d25: {exc}") from exc
+        except requests.RequestException as exc:
+            last_error = exc
+            if attempt < retry_count:
+                time.sleep(max(0.0, retry_delay) * (attempt + 1))
+                continue
+            raise ImportErrorDetail(f"\u8bf7\u6c42\u5931\u8d25: {exc}") from exc
 
-    body = _read_json(response)
-    if not response.ok:
+        body = _read_json(response)
+        if response.ok:
+            return body
+
         detail = body.get("detail") or body.get("msg") or str(body)
-        raise ImportErrorDetail(f"HTTP {response.status_code}: {detail}")
-    return body
+        last_error = ImportErrorDetail(f"HTTP {response.status_code}: {detail}")
+        if response.status_code in {502, 503, 504} and attempt < retry_count:
+            # 502 这类网关错误通常是暂时性的，稍等后再试。
+            time.sleep(max(0.0, retry_delay) * (attempt + 1))
+            continue
+        raise last_error
+
+    raise ImportErrorDetail(f"\u8bf7\u6c42\u5931\u8d25: {last_error}")
 
 
 def query_book_by_isbn(
@@ -312,6 +355,9 @@ def query_book_by_isbn(
     timeout: float,
     verify_ssl: bool,
     script_token: str,
+    throttle: RequestThrottle | None = None,
+    retry_count: int = DEFAULT_RETRY_COUNT,
+    retry_delay: float = DEFAULT_RETRY_DELAY,
 ) -> dict:
     return request_json(
         session,
@@ -321,6 +367,9 @@ def query_book_by_isbn(
         verify_ssl,
         {"isbn": isbn},
         script_token,
+        throttle,
+        retry_count,
+        retry_delay,
     )
 
 
@@ -334,6 +383,9 @@ def confirm_inventory(
     timeout: float,
     verify_ssl: bool,
     script_token: str,
+    throttle: RequestThrottle | None = None,
+    retry_count: int = DEFAULT_RETRY_COUNT,
+    retry_delay: float = DEFAULT_RETRY_DELAY,
 ) -> dict:
     title = (book.get("title") or "").strip()
     if not title:
@@ -359,6 +411,9 @@ def confirm_inventory(
         verify_ssl,
         payload,
         script_token,
+        throttle,
+        retry_count,
+        retry_delay,
     )
 
 
@@ -385,12 +440,16 @@ def process_one(
     timeout: float,
     verify_ssl: bool,
     script_token: str,
+    throttle: RequestThrottle | None = None,
+    retry_count: int = DEFAULT_RETRY_COUNT,
+    retry_delay: float = DEFAULT_RETRY_DELAY,
 ) -> ProcessResult:
     isbn: str | None = None
     try:
+        # 一张图片会经历两次接口调用：先查书，再确认入库。
         isbn = decode_isbn_from_image(image_path)
-        book = query_book_by_isbn(session, base_url, isbn, timeout, verify_ssl, script_token)
-        confirm_inventory(session, base_url, operator, isbn, quantity, book, timeout, verify_ssl, script_token)
+        book = query_book_by_isbn(session, base_url, isbn, timeout, verify_ssl, script_token, throttle, retry_count, retry_delay)
+        confirm_inventory(session, base_url, operator, isbn, quantity, book, timeout, verify_ssl, script_token, throttle, retry_count, retry_delay)
         image_path.unlink()
         return ProcessResult(image_path.name, isbn, True, "入库成功，已删除图片")
     except Exception as exc:
@@ -401,6 +460,15 @@ def main() -> int:
     args = parse_args()
     if args.quantity <= 0:
         print("quantity 必须大于 0", file=sys.stderr)
+        return 2
+    if args.request_interval < 0:
+        print("\u0072\u0065\u0071\u0075\u0065\u0073\u0074\u002d\u0069\u006e\u0074\u0065\u0072\u0076\u0061\u006c \u5fc5\u987b\u5927\u4e8e\u7b49\u4e8e 0", file=sys.stderr)
+        return 2
+    if args.retry_count < 0:
+        print("\u0072\u0065\u0074\u0072\u0079\u002d\u0063\u006f\u0075\u006e\u0074 \u5fc5\u987b\u5927\u4e8e\u7b49\u4e8e 0", file=sys.stderr)
+        return 2
+    if args.retry_delay < 0:
+        print("\u0072\u0065\u0074\u0072\u0079\u002d\u0064\u0065\u006c\u0061\u0079 \u5fc5\u987b\u5927\u4e8e\u7b49\u4e8e 0", file=sys.stderr)
         return 2
     pending_dir: Path = args.pending_dir
     failure_dir: Path = args.failure_dir
@@ -423,6 +491,8 @@ def main() -> int:
         }
     )
     tunnel_process: subprocess.Popen[str] | None = None
+    # 所有接口请求都经过这里，统一做限速和临时性错误重试。
+    throttle = RequestThrottle(min_interval=args.request_interval)
 
     try:
         runtime = prepare_runtime(session, args)
@@ -440,6 +510,9 @@ def main() -> int:
                 timeout=args.timeout,
                 verify_ssl=runtime.verify_ssl,
                 script_token=args.script_token,
+                throttle=throttle,
+                retry_count=args.retry_count,
+                retry_delay=args.retry_delay,
             )
             results.append(result)
             status = "SUCCESS" if result.success else "FAILED"
