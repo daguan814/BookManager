@@ -26,6 +26,8 @@ class Settings:
     web_login_password: str = os.getenv("WEB_LOGIN_PASSWORD", "sgxx")
     script_api_token: str = os.getenv("SCRIPT_API_TOKEN", "bookmanager-script-token")
     session_days: int = int(os.getenv("SESSION_DAYS", "7"))
+    db_connect_retries: int = int(os.getenv("DB_CONNECT_RETRIES", "20"))
+    db_connect_retry_delay: float = float(os.getenv("DB_CONNECT_RETRY_DELAY", "3"))
     shumaidata_appid: str = "xZT0HZmiaFg2rWbEWS3ODE3u26sCmhmk"
     shumaidata_app_security: str = "FNlCyjyL2JndvhluQEk59gUcEI8GG3va"
 
